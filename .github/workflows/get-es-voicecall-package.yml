@@ -28,6 +28,7 @@ jobs:
       run: |
         git add EsVoiceCall/EsVoiceCall.xcframework.zip
         git commit -m "Add downloaded framework zip file"
+        git pull
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
