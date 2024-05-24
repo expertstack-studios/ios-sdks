@@ -17,7 +17,7 @@ jobs:
     - name: Download Framework
       run: |
         mkdir -p EsVoiceCall
-        curl -L -o EsVoiceCall/EsVoiceCall.xcframework.zip https://es-sc-ios-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/EsVoiceCall.xcframework.zip
+        curl -L -o EsVoiceCall/EsVoiceCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/EsVoiceCall.xcframework.zip
 
     - name: Configure Git
       run: |
