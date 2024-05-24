@@ -1,0 +1,33 @@
+name: Download ES Voice Call SDK and Commit Framework
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Change to Project Directory
+      run: cd $GITHUB_WORKSPACE
+
+    - name: Download Framework
+      run: |
+        mkdir -p EsVoiceCall
+        curl -L -o EsVoiceCall/EsVoiceCall.xcframework.zip https://es-sc-ios-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/EsVoiceCall.xcframework.zip
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        
+    - name: Add to Git and Commit
+      run: |
+        git add EsVoiceCall/EsVoiceCall.xcframework.zip
+        git commit -m "Add downloaded framework zip file"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
