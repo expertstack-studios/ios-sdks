@@ -1,1 +1,83 @@
+name: Download and Commit Framework
 
+on:
+  workflow_dispatch:
+
+jobs:
+  download-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Change to Project Directory
+      run: cd $GITHUB_WORKSPACE
+
+    - name: Verify Zip Checksum
+      run: |
+          local_checksum=$(openssl sha256 EsScVideoCall/EsScVideoCall.xcframework.zip | awk '{print $2}')
+          echo "LOCAL_CHECKSUM=$local_checksum" >> $GITHUB_ENV
+
+    - name: Download Framework
+      run: |
+        mkdir -p EsScVideoCall
+        curl -L -o EsScVideoCall/EsScVideoCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsScVideoCall/EsScVideoCall.xcframework.zip
+
+    - name: Get New Downloaded Zip Checksum
+      run: |
+          remote_checksum=$(openssl sha256 EsScVideoCall/EsScVideoCall.xcframework.zip | awk '{print $2}')
+          echo "REMOTE_CHECKSUM=$remote_checksum" >> $GITHUB_ENV
+
+    - name: Compare Checksums
+      id: compare
+      run: |
+          if [ "${{ env.LOCAL_CHECKSUM }}" != "${{ env.REMOTE_CHECKSUM }}" ]; then
+            echo "Checksums are different."
+            echo "DIFFERENT_CHECKSUMS=true" >> $GITHUB_ENV
+          else
+            echo "Checksums are the same."
+            echo "DIFFERENT_CHECKSUMS=false" >> $GITHUB_ENV
+          fi
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'Vivek Lalan'
+        git config --global user.email 'iamviveklalan@gmail..com'
+
+        
+    - name: Get Last Tag
+      id: last_tag
+      run: |
+        # Fetch all tags from the remote repository
+        git fetch --tags
+        LATEST_TAG=$(git tag | sort -V | tail -n 1)
+        # Print the latest tag
+        echo "Latest tag: $LATEST_TAG"
+        echo "LAST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
+    - name: Increment Tag
+      id: increment_tag
+      run: |
+        tag_parts=($(echo $LAST_TAG | tr '.' ' '))
+        patch=$((tag_parts[2] + 1))
+        NEW_TAG="${tag_parts[0]}.${tag_parts[1]}.$patch"
+        echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+    - name: Get last commit message
+      run: |
+        curl -o release_notes.txt https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsScVideoCall/release_notes.txt
+        echo "RELEASE_NOTE=$(<release_notes.txt)" >> $GITHUB_ENV
+
+    - name: Update Tag and Push
+      if: ${{ env.DIFFERENT_CHECKSUMS == 'true' }}
+      run: |
+        git checkout main  
+        git add EsScVideoCall/EsScVideoCall.xcframework.zip
+        git commit -m "Version ${{ env.NEW_TAG }}"
+        git pull
+        git tag ${{ env.NEW_TAG }} -m "Version ${{ env.NEW_TAG }} \n $RELEASE_NOTE"
+        git push --tags
+        git push origin main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
