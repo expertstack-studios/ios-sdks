@@ -1,4 +1,4 @@
-name: Download ES Voice Call SDK and Commit Framework
+name: Download and Commit Framework
 
 on:
   workflow_dispatch:
@@ -14,21 +14,70 @@ jobs:
     - name: Change to Project Directory
       run: cd $GITHUB_WORKSPACE
 
+    - name: Verify Zip Checksum
+      run: |
+          local_checksum=$(openssl sha256 EsScVoiceCall/EsScVoiceCall.xcframework.zip | awk '{print $2}')
+          echo "LOCAL_CHECKSUM=$local_checksum" >> $GITHUB_ENV
+
     - name: Download Framework
       run: |
-        mkdir -p EsVoiceCall
-        curl -L -o EsVoiceCall/EsVoiceCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/EsVoiceCall.xcframework.zip
+        mkdir -p EsScVoiceCall
+        curl -L -o EsScVoiceCall/EsScVoiceCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsScVoiceCall/EsScVoiceCall.xcframework.zip
+
+    - name: Get New Downloaded Zip Checksum
+      run: |
+          remote_checksum=$(openssl sha256 EsScVoiceCall/EsScVoiceCall.xcframework.zip | awk '{print $2}')
+          echo "REMOTE_CHECKSUM=$remote_checksum" >> $GITHUB_ENV
+
+    - name: Compare Checksums
+      id: compare
+      run: |
+          if [ "${{ env.LOCAL_CHECKSUM }}" != "${{ env.REMOTE_CHECKSUM }}" ]; then
+            echo "Checksums are different."
+            echo "DIFFERENT_CHECKSUMS=true" >> $GITHUB_ENV
+          else
+            echo "Checksums are the same."
+            echo "DIFFERENT_CHECKSUMS=false" >> $GITHUB_ENV
+          fi
 
     - name: Configure Git
       run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
+        git config --global user.name 'Vivek Lalan'
+        git config --global user.email 'iamviveklalan@gmail..com'
+
         
-    - name: Add to Git and Commit
+    - name: Get Last Tag
+      id: last_tag
       run: |
-        git add EsVoiceCall/EsVoiceCall.xcframework.zip
-        git commit -m "Add downloaded framework zip file"
+        # Fetch all tags from the remote repository
+        git fetch --tags
+        LATEST_TAG=$(git tag | sort -V | tail -n 1)
+        # Print the latest tag
+        echo "Latest tag: $LATEST_TAG"
+        echo "LAST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
+    - name: Increment Tag
+      id: increment_tag
+      run: |
+        tag_parts=($(echo $LAST_TAG | tr '.' ' '))
+        patch=$((tag_parts[2] + 1))
+        NEW_TAG="${tag_parts[0]}.${tag_parts[1]}.$patch"
+        echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+    - name: Get last commit message
+      run: |
+        curl -o release_notes.txt https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsScVoiceCall/release_notes.txt
+        echo "RELEASE_NOTE=$(<release_notes.txt)" >> $GITHUB_ENV
+
+    - name: Update Tag and Push
+      if: ${{ env.DIFFERENT_CHECKSUMS == 'true' }}
+      run: |
+        git checkout main  
+        git add EsScVoiceCall/EsScVoiceCall.xcframework.zip
+        git commit -m "Version ${{ env.NEW_TAG }}"
         git pull
-        git push
+        git tag ${{ env.NEW_TAG }} -m "Version ${{ env.NEW_TAG }} \n $RELEASE_NOTE"
+        git push --tags
+        git push origin main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
