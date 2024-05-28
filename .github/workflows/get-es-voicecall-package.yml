@@ -16,17 +16,17 @@ jobs:
 
     - name: Verify Zip Checksum
       run: |
-          local_checksum=$(openssl sha256 EsScVoiceCall/EsScVoiceCall.xcframework.zip | awk '{print $2}')
+          local_checksum=$(openssl sha256 EsVoiceCall/EsVoiceCall.xcframework.zip | awk '{print $2}')
           echo "LOCAL_CHECKSUM=$local_checksum" >> $GITHUB_ENV
 
     - name: Download Framework
       run: |
-        mkdir -p EsScVoiceCall
-        curl -L -o EsScVoiceCall/EsScVoiceCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsScVoiceCall/EsScVoiceCall.xcframework.zip
+        mkdir -p EsVoiceCall
+        curl -L -o EsVoiceCall/EsVoiceCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/EsVoiceCall.xcframework.zip
 
     - name: Get New Downloaded Zip Checksum
       run: |
-          remote_checksum=$(openssl sha256 EsScVoiceCall/EsScVoiceCall.xcframework.zip | awk '{print $2}')
+          remote_checksum=$(openssl sha256 EsVoiceCall/EsVoiceCall.xcframework.zip | awk '{print $2}')
           echo "REMOTE_CHECKSUM=$remote_checksum" >> $GITHUB_ENV
 
     - name: Compare Checksums
@@ -66,14 +66,14 @@ jobs:
 
     - name: Get last commit message
       run: |
-        curl -o release_notes.txt https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsScVoiceCall/release_notes.txt
+        curl -o release_notes.txt https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/release_notes.txt
         echo "RELEASE_NOTE=$(<release_notes.txt)" >> $GITHUB_ENV
 
     - name: Update Tag and Push
       if: ${{ env.DIFFERENT_CHECKSUMS == 'true' }}
       run: |
         git checkout main  
-        git add EsScVoiceCall/EsScVoiceCall.xcframework.zip
+        git add EsVoiceCall/EsVoiceCall.xcframework.zip
         git commit -m "Version ${{ env.NEW_TAG }}"
         git pull
         git tag ${{ env.NEW_TAG }} -m "Version ${{ env.NEW_TAG }} \n $RELEASE_NOTE"
