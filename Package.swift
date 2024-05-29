@@ -7,23 +7,23 @@ let package = Package(
   name: "EsCallSdk",
   products: [
     .library(
-      name: "EsVoiceCall",
-      targets: ["EsVoiceCall"]),
-//    .library(
-//      name: "EsVideoCall",
-//      targets: ["EsVideoCall"]),
-//    .library(
-//      name: "EsBrandCall",
-//      targets: ["EsBrandCall"]),
+      name: "SecuredCallsSDK",
+      targets: ["SecuredCallsSDK"]),
+   .library(
+     name: "SecuredVideoCallsSDK",
+     targets: ["SecuredVideoCallsSDK"]),
+   .library(
+     name: "SecuredVoiceCallsSDK",
+     targets: ["SecuredVoiceCallsSDK"]),
   ],
   targets: [
     .binaryTarget(
-      name: "EsVoiceCall",
-      path: "./EsVoiceCall/EsVoiceCall.xcframework.zip"),
-//    .binaryTarget(
-//      name: "EsVideoCall",
-//      path: "./EsVideoCall/EsVideoCall.xcframework.zip"),
-//    .binaryTarget(
-//      name: "EsBrandCall",
-//      path: "./EsBrandCall/EsBrandCall.xcframework.zip")
+      name: "SecuredCallsSDK",
+      path: "./SecuredCallsSDK/SecuredCallsSDK.xcframework.zip"),
+   .binaryTarget(
+     name: "SecuredVideoCallsSDK",
+     path: "./SecuredVideoCallsSDK/SecuredVideoCallsSDK.xcframework.zip"),
+   .binaryTarget(
+     name: "SecuredVoiceCallsSDK",
+     path: "./SecuredVoiceCallsSDK/SecuredVoiceCallsSDK.xcframework.zip")
   ])

@@ -1,4 +1,4 @@
-name: Download and Commit Framework
+name: Download SecuredVoiceCallsSDK and update
 
 on:
   workflow_dispatch:
@@ -16,17 +16,17 @@ jobs:
 
     - name: Verify Zip Checksum
       run: |
-          local_checksum=$(openssl sha256 EsVoiceCall/EsVoiceCall.xcframework.zip | awk '{print $2}')
+          local_checksum=$(openssl sha256 SecuredVoiceCallsSDK/SecuredVoiceCallsSDK.xcframework.zip | awk '{print $2}')
           echo "LOCAL_CHECKSUM=$local_checksum" >> $GITHUB_ENV
 
     - name: Download Framework
       run: |
-        mkdir -p EsVoiceCall
-        curl -L -o EsVoiceCall/EsVoiceCall.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/EsVoiceCall.xcframework.zip
+        mkdir -p SecuredVoiceCallsSDK
+        curl -L -o SecuredVoiceCallsSDK/SecuredVoiceCallsSDK.xcframework.zip https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/SecuredVoiceCallsSDK/SecuredVoiceCallsSDK.xcframework.zip
 
     - name: Get New Downloaded Zip Checksum
       run: |
-          remote_checksum=$(openssl sha256 EsVoiceCall/EsVoiceCall.xcframework.zip | awk '{print $2}')
+          remote_checksum=$(openssl sha256 SecuredVoiceCallsSDK/SecuredVoiceCallsSDK.xcframework.zip | awk '{print $2}')
           echo "REMOTE_CHECKSUM=$remote_checksum" >> $GITHUB_ENV
 
     - name: Compare Checksums
@@ -55,27 +55,36 @@ jobs:
         # Print the latest tag
         echo "Latest tag: $LATEST_TAG"
         echo "LAST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-
+    
     - name: Increment Tag
       id: increment_tag
       run: |
-        tag_parts=($(echo $LAST_TAG | tr '.' ' '))
-        patch=$((tag_parts[2] + 1))
-        NEW_TAG="${tag_parts[0]}.${tag_parts[1]}.$patch"
+        if [ -z "$LAST_TAG" ]; then
+          # If the last tag is empty, set new tag to 1.0.0
+          NEW_TAG="1.0.0"
+        else
+          # Split the last tag into parts
+          tag_parts=($(echo $LAST_TAG | tr '.' ' '))
+          # Increment the patch version
+          patch=$((tag_parts[2] + 1))
+          # Construct the new tag
+          NEW_TAG="${tag_parts[0]}.${tag_parts[1]}.$patch"
+        fi
+        echo "New tag: $NEW_TAG"
         echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
     - name: Get last commit message
       run: |
-        curl -o release_notes.txt https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/EsVoiceCall/release_notes.txt
+        curl -o release_notes.txt https://es-sc-ios-branding-sdk.s3.ap-southeast-2.amazonaws.com/SecuredVoiceCallsSDK/release_notes.txt
         echo "RELEASE_NOTE=$(<release_notes.txt)" >> $GITHUB_ENV
 
     - name: Update Tag and Push
       if: ${{ env.DIFFERENT_CHECKSUMS == 'true' }}
       run: |
         git checkout main  
-        git add EsVoiceCall/EsVoiceCall.xcframework.zip
-        git commit -m "Version ${{ env.NEW_TAG }}"
         git pull
+        git add SecuredVoiceCallsSDK/SecuredVoiceCallsSDK.xcframework.zip
+        git commit -m "Version ${{ env.NEW_TAG }}"
         git tag ${{ env.NEW_TAG }} -m "Version ${{ env.NEW_TAG }} \n $RELEASE_NOTE"
         git push --tags
         git push origin main
