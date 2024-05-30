@@ -85,7 +85,8 @@ jobs:
         git pull
         git add SecuredCallsSDK/SecuredCallsSDK.xcframework.zip
         git commit -m "Version ${{ env.NEW_TAG }}"
-        git tag ${{ env.NEW_TAG }} -m "Version ${{ env.NEW_TAG }} \n $RELEASE_NOTE"
+        git tag ${{ env.NEW_TAG }} -m "Version ${{ env.NEW_TAG }} 
+        $RELEASE_NOTE"
         git push --tags
         git push origin main
       env:
